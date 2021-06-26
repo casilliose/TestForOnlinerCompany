@@ -17,3 +17,45 @@ services:
     container_name: php-fpm-test-onliner
     volumes:
       - ../app:/www
+    environment:
+      REDIS_HOST: redis-node-0 redis-node-1 redis-node-2
+      REDIS_PORT: 6379
+  redis-node-0:
+    image: docker.io/bitnami/redis-cluster:5.0-debian-10
+    volumes:
+      - redis-cluster_data-0:/bitnami/redis/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
+  redis-node-1:
+    image: docker.io/bitnami/redis-cluster:5.0-debian-10
+    volumes:
+      - redis-cluster_data-1:/bitnami/redis/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
+  redis-node-2:
+    image: docker.io/bitnami/redis-cluster:5.0-debian-10
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
+  redis-cluster-init:
+    image: docker.io/bitnami/redis-cluster:5.0-debian-10
+    depends_on:
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_CLUSTER_REPLICAS=0
+      - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
+      - REDIS_CLUSTER_CREATOR=yes
+volumes:
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
