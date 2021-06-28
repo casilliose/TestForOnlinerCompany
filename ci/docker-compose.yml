@@ -4,23 +4,46 @@ services:
     image: nginx:latest
     container_name: nginx-test-onliner
     ports:
-      - 9000:80
-      - 9004:443
+      - 9100:80
+      - 9104:443
     volumes:
       - ./data:/var/log/nginx
       - ./nginx/conf:/etc/nginx/conf.d
-      - ../app:/www
+      - ../app:/app
     links:
       - php
+  mysql:
+    image: mysql:5.7.20
+    volumes:
+      - ./data/db:/var/lib/mysql
+    ports:
+      - 3310:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
   php:
     build: ./php
     container_name: php-fpm-test-onliner
+    expose:
+      - 9000
     volumes:
-      - ../app:/www
+      - ../app:/app
+    links:
+      - mysql
     environment:
       REDIS_HOST: redis-node-0 redis-node-1 redis-node-2
       REDIS_PORT: 6379
+      PHP_IDE_CONFIG: serverName=onliner-test
+      XDEBUG_CONFIG: remote_host=<IP REMOTE HOST> remote_enable=On remote_autostart=1
+          remote_connect_back=1 remote_port=9000 remote_log=/tmp/php7-xdebug.log
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: counterpage
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
   redis-node-0:
+    container_name: redis-node-0-test-onliner
     image: docker.io/bitnami/redis-cluster:5.0-debian-10
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data
@@ -28,6 +51,7 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
   redis-node-1:
+    container_name: redis-node-1-test-onliner
     image: docker.io/bitnami/redis-cluster:5.0-debian-10
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data
@@ -35,6 +59,7 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
   redis-node-2:
+    container_name: redis-node-2-test-onliner
     image: docker.io/bitnami/redis-cluster:5.0-debian-10
     volumes:
       - redis-cluster_data-2:/bitnami/redis/data
@@ -42,6 +67,7 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_NODES=redis-node-0 redis-node-1 redis-node-2
   redis-cluster-init:
+    container_name: redis-node-init-test-onliner
     image: docker.io/bitnami/redis-cluster:5.0-debian-10
     depends_on:
       - redis-node-0
